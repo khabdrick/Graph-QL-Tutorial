@@ -1,6 +1,8 @@
 import graphene
 from graphene_django import DjangoObjectType #used to change Django object into a format that is readable by GraphQL
 from app.models import Contact
+from graphql_auth.schema import UserQuery
+from graphql_auth import mutations
 
 class ContactType(DjangoObjectType):
     # Decribe the data that sre to be formatted into GraphQL fields
@@ -8,7 +10,7 @@ class ContactType(DjangoObjectType):
         model = Contact
         field = ("id", "name", "phone_number")
 
-class Query(graphene.ObjectType):
+class Query(UserQuery, graphene.ObjectType):
     #query ContactType to get list of contacts
     list_contact=graphene.List(ContactType)
     read_contact = graphene.Field(ContactType, id=graphene.Int()) # id=graphene.Int() gives id an integer datatype
@@ -53,7 +55,15 @@ class ContactDelete(graphene.Mutation):
         #########Delete##############
         contact.delete()
 
-class Mutation(graphene.ObjectType):
+class AuthMutation(graphene.ObjectType):
+   register = mutations.Register.Field() #predefined settings to register user
+   verify_account = mutations.VerifyAccount.Field() #used to verify account
+   token_auth = mutations.ObtainJSONWebToken.Field() # get jwt to log in
+
+
+
+
+class Mutation(AuthMutation, graphene.ObjectType):
     create_contact = ContactMutation.Field()  
     update_contact = ContactMutation.Field() #new
     delete_contact = ContactDelete.Field()
